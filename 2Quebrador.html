@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quebrador de Texto Inteligente</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        textarea::-webkit-scrollbar { width: 8px; }
+        textarea::-webkit-scrollbar-track { background: #f1f1f1; }
+        textarea::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        textarea::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="text-gray-800 h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 shadow-sm py-4 px-6 flex justify-between items-center z-10">
+        <div class="flex items-center gap-2">
+            <i data-lucide="scissors" class="text-indigo-600 w-8 h-8"></i>
+            <div>
+                <h1 class="text-xl font-bold text-gray-900">Quebrador de Texto</h1>
+                <p class="text-xs text-gray-500">Formatação para Legendas e Teleprompter</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col md:flex-row overflow-hidden">
+        
+        <!-- Left Column: Input & Controls -->
+        <div class="w-full md:w-1/2 p-4 md:p-6 flex flex-col border-r border-gray-200 bg-white relative">
+            
+            <!-- Mode Tabs -->
+            <div class="flex bg-gray-100 p-1 rounded-lg mb-4 w-full">
+                <button onclick="setMode('punctuation')" id="tabPunc" class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all bg-white text-indigo-700 shadow-sm">
+                    Por Pontuação
+                </button>
+                <button onclick="setMode('chars')" id="tabChar" class="flex-1 py-2 px-4 rounded-md text-sm font-medium text-gray-500 hover:text-gray-700 transition-all">
+                    Por Caracteres
+                </button>
+            </div>
+
+            <!-- Settings Panel (Dynamic) -->
+            <div id="settingsPanel" class="bg-indigo-50 border border-indigo-100 rounded-lg p-4 mb-4">
+                <!-- Punctuation Settings -->
+                <div id="puncSettings">
+                    <label class="text-xs font-bold text-indigo-800 uppercase mb-2 block">Quebrar nestes símbolos:</label>
+                    <div class="flex gap-2 text-sm font-mono bg-white p-2 rounded border border-indigo-200 text-gray-600">
+                        . ? ! ; :
+                    </div>
+                    <p class="text-xs text-indigo-600 mt-2">
+                        <i data-lucide="info" class="w-3 h-3 inline"></i> Quebra a linha após a pontuação.
+                    </p>
+                </div>
+
+                <!-- Character Settings -->
+                <div id="charSettings" class="hidden">
+                    <label class="text-xs font-bold text-indigo-800 uppercase mb-2 block">Máximo de Caracteres por Linha:</label>
+                    <div class="flex items-center gap-3">
+                        <input type="number" id="maxChars" value="32" min="10" max="200" 
+                            class="w-24 p-2 border border-indigo-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-center font-bold text-lg text-indigo-700">
+                        <span class="text-xs text-gray-500">Recomendado: 32-42 para legendas.</span>
+                    </div>
+                    <p class="text-xs text-indigo-600 mt-2">
+                        <i data-lucide="check-circle" class="w-3 h-3 inline"></i> Não corta palavras ao meio.
+                    </p>
+                </div>
+            </div>
+
+            <textarea id="inputText" 
+                class="flex-1 w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-sm leading-relaxed shadow-inner mb-4"
+                placeholder="Cole seu texto longo aqui para ser formatado..."
+            ></textarea>
+
+            <button onclick="processText()" 
+                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg shadow transition-all flex items-center justify-center gap-2 font-bold text-lg">
+                <i data-lucide="arrow-right-circle" class="w-5 h-5"></i> Processar Texto
+            </button>
+        </div>
+
+        <!-- Right Column: Output -->
+        <div class="w-full md:w-1/2 p-4 md:p-6 flex flex-col bg-gray-50">
+            <div class="flex justify-between items-center mb-2">
+                <label class="font-semibold text-gray-700 flex items-center gap-2">
+                    <i data-lucide="list" class="w-4 h-4"></i> Resultado Formatado
+                </label>
+                <span id="lineCount" class="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full font-mono">0 linhas</span>
+            </div>
+            
+            <textarea id="outputText" readonly
+                class="flex-1 w-full p-4 bg-white text-gray-800 font-mono text-sm border border-gray-300 rounded-lg shadow-sm resize-none focus:ring-2 focus:ring-indigo-500 outline-none"
+                placeholder="O texto quebrado aparecerá aqui..."
+            ></textarea>
+
+            <div class="mt-4 flex gap-3">
+                <button onclick="copyToClipboard()" 
+                    class="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 py-3 rounded-lg shadow-sm font-medium flex items-center justify-center gap-2 transition-all">
+                    <i data-lucide="copy" class="w-4 h-4"></i> Copiar
+                </button>
+                <button onclick="clearAll()" 
+                    class="px-4 text-red-500 hover:bg-red-50 hover:text-red-700 rounded-lg font-medium transition-all">
+                    Limpar
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+        let currentMode = 'punctuation'; // 'punctuation' or 'chars'
+
+        function setMode(mode) {
+            currentMode = mode;
+            
+            // UI Updates
+            const tabPunc = document.getElementById('tabPunc');
+            const tabChar = document.getElementById('tabChar');
+            const setPunc = document.getElementById('puncSettings');
+            const setChar = document.getElementById('charSettings');
+
+            if (mode === 'punctuation') {
+                tabPunc.className = "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all bg-white text-indigo-700 shadow-sm";
+                tabChar.className = "flex-1 py-2 px-4 rounded-md text-sm font-medium text-gray-500 hover:text-gray-700 transition-all";
+                setPunc.classList.remove('hidden');
+                setChar.classList.add('hidden');
+            } else {
+                tabChar.className = "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all bg-white text-indigo-700 shadow-sm";
+                tabPunc.className = "flex-1 py-2 px-4 rounded-md text-sm font-medium text-gray-500 hover:text-gray-700 transition-all";
+                setChar.classList.remove('hidden');
+                setPunc.classList.add('hidden');
+            }
+            
+            // Auto re-process if there is text
+            if(document.getElementById('inputText').value.trim() !== "") {
+                processText();
+            }
+        }
+
+        function processText() {
+            const input = document.getElementById('inputText').value;
+            if (!input.trim()) return;
+
+            let resultLines = [];
+
+            if (currentMode === 'punctuation') {
+                // Regex explanation:
+                // ([.?!;:]) -> Capture the punctuation marks in a group so they are kept in the split result
+                // We replace the punctuation with "PUNCTUATION_MARK\n" effectively
+                
+                // Method 1: Replace punctuation with Punctuation + NewLine
+                // We treat . ? ! ; : as break points.
+                let processed = input.replace(/([.?!;:])\s*/g, "$1\n");
+                
+                // Split by newline and filter empty
+                resultLines = processed.split('\n').map(l => l.trim()).filter(l => l !== '');
+
+            } else {
+                const maxChars = parseInt(document.getElementById('maxChars').value) || 32;
+                // Normalize spaces (remove double spaces, tabs, newlines becomes spaces first)
+                const words = input.replace(/\s+/g, ' ').trim().split(' ');
+                
+                let currentLine = "";
+
+                words.forEach(word => {
+                    // If adding the next word exceeds limit (current + space + word)
+                    if ((currentLine.length + 1 + word.length) > maxChars) {
+                        if (currentLine) resultLines.push(currentLine);
+                        currentLine = word;
+                    } else {
+                        // Add to current line
+                        currentLine = currentLine ? (currentLine + " " + word) : word;
+                    }
+                });
+                // Push the last line
+                if (currentLine) resultLines.push(currentLine);
+            }
+
+            const finalOutput = resultLines.join('\n');
+            document.getElementById('outputText').value = finalOutput;
+            document.getElementById('lineCount').innerText = `${resultLines.length} linhas`;
+        }
+
+        function copyToClipboard() {
+            const output = document.getElementById('outputText');
+            if(!output.value) return;
+            
+            output.select();
+            document.execCommand('copy');
+            
+            const btn = document.querySelector('button[onclick="copyToClipboard()"]');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Copiado!`;
+            lucide.createIcons();
+            setTimeout(() => {
+                btn.innerHTML = originalContent;
+                lucide.createIcons();
+            }, 1500);
+        }
+
+        function clearAll() {
+            document.getElementById('inputText').value = '';
+            document.getElementById('outputText').value = '';
+            document.getElementById('lineCount').innerText = '0 linhas';
+            document.getElementById('inputText').focus();
+        }
+    </script>
+</body>
+</html>

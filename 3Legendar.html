@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Legendas SRT Inteligente</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        /* Custom scrollbar for textareas */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        textarea::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+    </style>
+</head>
+<body class="text-gray-800 h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 shadow-sm py-4 px-6 flex justify-between items-center z-10">
+        <div class="flex items-center gap-2">
+            <i data-lucide="file-video" class="text-blue-600 w-8 h-8"></i>
+            <div>
+                <h1 class="text-xl font-bold text-gray-900">Gerador de SRT</h1>
+                <p class="text-xs text-gray-500">Texto para Legenda (Baseado em WPM)</p>
+            </div>
+        </div>
+        <div class="text-sm text-gray-500 hidden sm:block">
+            Conversão automática linha-por-linha
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col md:flex-row overflow-hidden">
+        
+        <!-- Left Column: Input -->
+        <div class="w-full md:w-1/2 p-4 md:p-6 flex flex-col border-r border-gray-200 bg-white">
+            <div class="flex justify-between items-end mb-2">
+                <label class="font-semibold text-gray-700 flex items-center gap-2">
+                    <i data-lucide="text" class="w-4 h-4"></i> Texto Original
+                </label>
+                <button onclick="clearInput()" class="text-xs text-red-500 hover:text-red-700 hover:underline">
+                    Limpar
+                </button>
+            </div>
+            <textarea id="inputText" 
+                class="flex-1 w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-sm leading-relaxed shadow-inner"
+                placeholder="Cole seu texto aqui...&#10;Cada quebra de linha será uma nova legenda.&#10;O tempo será calculado automaticamente."
+            ></textarea>
+            
+            <!-- Controls Bar -->
+            <div class="mt-4 bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-wrap gap-4 items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="flex flex-col">
+                        <label for="wpm" class="text-xs font-bold text-gray-500 uppercase">Velocidade (WPM)</label>
+                        <input type="number" id="wpm" value="110" min="1" max="300" 
+                            class="w-20 p-1 border border-gray-300 rounded text-center focus:border-blue-500 outline-none font-mono">
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="gap" class="text-xs font-bold text-gray-500 uppercase">Intervalo (ms)</label>
+                        <input type="number" id="gap" value="50" min="0" max="1000" step="10" 
+                            class="w-20 p-1 border border-gray-300 rounded text-center focus:border-blue-500 outline-none font-mono"
+                            title="Pequena pausa entre legendas para evitar flicker">
+                    </div>
+                </div>
+                
+                <button onclick="generateSRT()" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow transition-all flex items-center gap-2 font-medium ml-auto">
+                    <i data-lucide="play" class="w-4 h-4 fill-current"></i> Gerar Legenda
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Column: Output -->
+        <div class="w-full md:w-1/2 p-4 md:p-6 flex flex-col bg-gray-50">
+            <div class="flex justify-between items-center mb-2">
+                <label class="font-semibold text-gray-700 flex items-center gap-2">
+                    <i data-lucide="file-code" class="w-4 h-4"></i> Resultado SRT
+                </label>
+                <div class="flex gap-2">
+                    <span id="statusMsg" class="text-xs text-green-600 font-medium opacity-0 transition-opacity">Copiado!</span>
+                </div>
+            </div>
+            
+            <textarea id="outputText" readonly
+                class="flex-1 w-full p-4 bg-gray-800 text-green-400 font-mono text-sm border border-gray-700 rounded-lg shadow-inner resize-none focus:ring-2 focus:ring-blue-500 outline-none"
+                placeholder="O resultado aparecerá aqui..."
+            ></textarea>
+
+            <!-- Action Buttons -->
+            <div class="mt-4 grid grid-cols-2 gap-4">
+                <button onclick="copyToClipboard()" id="btnCopy" disabled
+                    class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 px-4 py-3 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i data-lucide="copy" class="w-4 h-4"></i> Copiar Texto
+                </button>
+                <button onclick="downloadSRT()" id="btnDownload" disabled
+                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg shadow transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i data-lucide="download" class="w-4 h-4"></i> Baixar .SRT
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        function formatTime(totalSeconds) {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = Math.floor(totalSeconds % 60);
+            const milliseconds = Math.round((totalSeconds % 1) * 1000);
+
+            const hh = String(hours).padStart(2, '0');
+            const mm = String(minutes).padStart(2, '0');
+            const ss = String(seconds).padStart(2, '0');
+            const ms = String(milliseconds).padStart(3, '0');
+
+            return `${hh}:${mm}:${ss},${ms}`;
+        }
+
+        function generateSRT() {
+            const input = document.getElementById('inputText').value;
+            const wpm = parseInt(document.getElementById('wpm').value) || 110;
+            const gapMs = parseInt(document.getElementById('gap').value) || 50;
+            const gapSeconds = gapMs / 1000;
+
+            if (!input.trim()) {
+                alert("Por favor, insira algum texto primeiro.");
+                return;
+            }
+
+            // Split lines and remove empty ones
+            const lines = input.split('\n').filter(line => line.trim() !== '');
+            
+            let srtOutput = "";
+            let currentTime = 0;
+            const wordsPerSecond = wpm / 60;
+
+            lines.forEach((line, index) => {
+                const cleanLine = line.trim();
+                // Count words (split by spaces)
+                const wordCount = cleanLine.split(/\s+/).length;
+                
+                // Calculate duration: (Words / WordsPerSecond)
+                // Ensure minimum duration of 1.5s for very short lines for readability, 
+                // unless it's a single word, then maybe 1s.
+                // However, user asked for specific WPM logic. 
+                // Let's adhere strictly to WPM but enforce a logical minimum of 1 second so lines don't flash instantly.
+                let duration = wordCount / wordsPerSecond;
+                if (duration < 1.2) duration = 1.2; // Minimum readability threshold
+
+                const startTime = currentTime;
+                const endTime = startTime + duration;
+
+                srtOutput += `${index + 1}\n`;
+                srtOutput += `${formatTime(startTime)} --> ${formatTime(endTime)}\n`;
+                srtOutput += `${cleanLine}\n\n`;
+
+                // Update current time for next loop (End time + Gap)
+                currentTime = endTime + gapSeconds;
+            });
+
+            document.getElementById('outputText').value = srtOutput;
+            
+            // Enable buttons
+            document.getElementById('btnCopy').disabled = false;
+            document.getElementById('btnDownload').disabled = false;
+            
+            // Visual feedback for generation
+            const btnGen = document.querySelector('button[onclick="generateSRT()"]');
+            const originalText = btnGen.innerHTML;
+            btnGen.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Gerado!`;
+            lucide.createIcons();
+            setTimeout(() => {
+                btnGen.innerHTML = originalText;
+                lucide.createIcons();
+            }, 1500);
+        }
+
+        function copyToClipboard() {
+            const outputText = document.getElementById('outputText');
+            outputText.select();
+            document.execCommand('copy'); // Fallback for older browsers/iframe restrictions
+            
+            // Show feedback
+            const msg = document.getElementById('statusMsg');
+            msg.style.opacity = '1';
+            setTimeout(() => {
+                msg.style.opacity = '0';
+            }, 2000);
+        }
+
+        function downloadSRT() {
+            const content = document.getElementById('outputText').value;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'legendas.srt';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+
+        function clearInput() {
+            document.getElementById('inputText').value = '';
+            document.getElementById('outputText').value = '';
+            document.getElementById('btnCopy').disabled = true;
+            document.getElementById('btnDownload').disabled = true;
+            document.getElementById('inputText').focus();
+        }
+    </script>
+</body>
+</html>
