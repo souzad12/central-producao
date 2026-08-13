@@ -1,0 +1,2 @@
+Church History Studio Android v0.3.0 AI
+DeepSeek V4 integration · SQLite · Android Keystore
