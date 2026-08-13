@@ -1,14 +1,12 @@
 plugins { id 'com.android.application' }
-
 android {
-    namespace 'com.churchhistorystudio.app'
-    compileSdk 35
-
-    defaultConfig {
-        applicationId 'com.churchhistorystudio.app.v044'
-        minSdk 26
-        targetSdk 35
-        versionCode 44
-        versionName '0.4.4'
-    }
+  namespace 'com.churchhistorystudio.app'
+  compileSdk 35
+  defaultConfig {
+    applicationId 'com.churchhistorystudio.app.v045'
+    minSdk 26
+    targetSdk 35
+    versionCode 45
+    versionName '0.4.5'
+  }
 }
