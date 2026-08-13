@@ -2,7 +2,7 @@ name: Build CHS Android APK
 
 on:
   push:
-    branches: ["chs-android-v0.3"]
+    branches: ["chs-android-v0.4.1"]
   workflow_dispatch:
 
 jobs:
@@ -30,10 +30,10 @@ jobs:
         working-directory: chs-android-v0.1
         run: gradle assembleDebug --stacktrace
       - name: Collect APK
-        run: cp chs-android-v0.1/app/build/outputs/apk/debug/app-debug.apk Church-History-Studio-Android-v0.3.0-AI.apk
+        run: cp chs-android-v0.1/app/build/outputs/apk/debug/app-debug.apk Church-History-Studio-Android-v0.4.1-Anti-Repeticao.apk
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Church-History-Studio-Android-v0.3.0-AI
-          path: Church-History-Studio-Android-v0.3.0-AI.apk
+          name: Church-History-Studio-Android-v0.4.1-Anti-Repeticao
+          path: Church-History-Studio-Android-v0.4.1-Anti-Repeticao.apk
           if-no-files-found: error
