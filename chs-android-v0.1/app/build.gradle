@@ -5,10 +5,10 @@ android {
     compileSdk 35
 
     defaultConfig {
-        applicationId 'com.churchhistorystudio.app.v041'
+        applicationId 'com.churchhistorystudio.app.v042'
         minSdk 26
         targetSdk 35
-        versionCode 41
-        versionName '0.4.1'
+        versionCode 42
+        versionName '0.4.2'
     }
 }
