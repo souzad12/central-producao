@@ -22,8 +22,8 @@ public class WriterActivityV048 extends WriterActivityV047 {
       activeWeb=findWebView(getWindow().getDecorView());
       if(activeWeb!=null)activeWeb.addJavascriptInterface(new CsvBridge(),"CSVBridge");
     });
+    getWindow().getDecorView().postDelayed(this::loadCsvLayer,3200);
     getWindow().getDecorView().postDelayed(this::loadTrashLayer,9800);
-    getWindow().getDecorView().postDelayed(this::loadCsvLayer,11000);
   }
 
   private class CsvBridge {
