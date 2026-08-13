@@ -45,7 +45,12 @@ public class MainActivity extends Activity {
     s.setAllowFileAccess(true);
     s.setAllowContentAccess(true);
     web.addJavascriptInterface(new NativeBridge(), "NativeStore");
-    web.setWebViewClient(new WebViewClient());
+    web.setWebViewClient(new WebViewClient() {
+      @Override public void onPageFinished(WebView view, String url) {
+        super.onPageFinished(view, url);
+        injectAiPatch();
+      }
+    });
     web.setWebChromeClient(new WebChromeClient() {
       @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
         if (fileCallback != null) fileCallback.onReceiveValue(null);
@@ -58,7 +63,14 @@ public class MainActivity extends Activity {
         catch (Exception e) { fileCallback = null; showMessage("Não foi possível abrir o seletor de arquivos."); return false; }
       }
     });
-    web.loadUrl("file:///android_asset/index_v03.html");
+    web.loadUrl("file:///android_asset/index_v02.html");
+  }
+
+  private void injectAiPatch() {
+    try (InputStream in = getAssets().open("ai_patch_v03.js")) {
+      String script = readStream(in, 512 * 1024);
+      web.evaluateJavascript(script, null);
+    } catch (Exception e) { showMessage("Falha ao carregar módulo de IA: " + safeError(e)); }
   }
 
   private class StoreDb extends SQLiteOpenHelper {
@@ -145,17 +157,23 @@ public class MainActivity extends Activity {
     web.post(() -> web.evaluateJavascript(js, null));
   }
 
-  private String readUri(Uri uri, int maxBytes) throws Exception {
-    try (InputStream in = getContentResolver().openInputStream(uri); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-      if (in == null) throw new Exception("O Android não forneceu acesso ao arquivo.");
+  private String readStream(InputStream in, int maxBytes) throws Exception {
+    try (InputStream input = in; ByteArrayOutputStream out = new ByteArrayOutputStream()) {
       byte[] buffer = new byte[8192]; int read, total = 0;
-      while ((read = in.read(buffer)) != -1) {
+      while ((read = input.read(buffer)) != -1) {
         total += read;
-        if (total > maxBytes) throw new Exception("Arquivo maior que o limite permitido.");
+        if (total > maxBytes) throw new Exception("Conteúdo maior que o limite permitido.");
         out.write(buffer, 0, read);
       }
-      if (total == 0) throw new Exception("Arquivo vazio (0 B).");
       return new String(out.toByteArray(), StandardCharsets.UTF_8);
+    }
+  }
+  private String readUri(Uri uri, int maxBytes) throws Exception {
+    try (InputStream in = getContentResolver().openInputStream(uri)) {
+      if (in == null) throw new Exception("O Android não forneceu acesso ao arquivo.");
+      String text = readStream(in, maxBytes);
+      if (text.isEmpty()) throw new Exception("Arquivo vazio (0 B).");
+      return text;
     }
   }
   private void importCsv(Uri uri) {
