@@ -1,12 +1,48 @@
 plugins { id 'com.android.application' }
+
 android {
   namespace 'com.churchhistorystudio.app'
   compileSdk 35
   defaultConfig {
-    applicationId 'com.churchhistorystudio.app.v049'
+    applicationId 'com.churchhistorystudio.app.v050'
     minSdk 26
     targetSdk 35
-    versionCode 49
-    versionName '0.4.9'
+    versionCode 50
+    versionName '0.5.0'
   }
 }
+
+def stableSources = [
+  'ai_patch_v03.js',
+  'writer_patch_v04.js',
+  'anti_repeat_patch_v041.js',
+  'anti_repeat_ui_v041.js',
+  'tts_ultrastrict_patch_v042.js',
+  'duration_guard_v044.js',
+  'style_router_v045.js',
+  'provider_vault_v046.js',
+  'lifecycle_migration_v046.js',
+  'ui_delete_v047.js',
+  'editorial_trash_v048.js',
+  'native_csv_v049.js',
+  'stable_finalize_v050.js'
+]
+
+tasks.register('generateStableBundle') {
+  def assetsDir = file('src/main/assets')
+  def output = file('src/main/assets/stable_bundle_v050.js')
+  inputs.files(stableSources.collect { new File(assetsDir, it) })
+  outputs.file(output)
+  doLast {
+    output.setText('/* CHS ANDROID v0.5.0 STABLE — bundle consolidado; carregamento único. */\n', 'UTF-8')
+    stableSources.each { name ->
+      def source = new File(assetsDir, name)
+      if (!source.exists()) throw new GradleException('Fonte ausente no bundle STABLE: ' + name)
+      output.append('\n/* --- ' + name + ' --- */\n', 'UTF-8')
+      output.append(source.getText('UTF-8'), 'UTF-8')
+      output.append('\n;\n', 'UTF-8')
+    }
+  }
+}
+
+tasks.named('preBuild').configure { dependsOn 'generateStableBundle' }
