@@ -1,10 +1,8 @@
 name: Build CHS Android APK
-
 on:
   push:
-    branches: ["chs-android-v0.4.2"]
+    branches: ["chs-android-v0.4.3"]
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,9 +17,7 @@ jobs:
       - name: Android SDK
         uses: android-actions/setup-android@v3
       - name: Install Android 35
-        run: |
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
       - name: Gradle 8.10.2
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -30,10 +26,10 @@ jobs:
         working-directory: chs-android-v0.1
         run: gradle assembleDebug --stacktrace
       - name: Collect APK
-        run: cp chs-android-v0.1/app/build/outputs/apk/debug/app-debug.apk Church-History-Studio-Android-v0.4.2-TTS-Ultraestrito.apk
+        run: cp chs-android-v0.1/app/build/outputs/apk/debug/app-debug.apk Church-History-Studio-Android-v0.4.3-Hotfix.apk
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Church-History-Studio-Android-v0.4.2-TTS-Ultraestrito
-          path: Church-History-Studio-Android-v0.4.2-TTS-Ultraestrito.apk
+          name: Church-History-Studio-Android-v0.4.3-Hotfix
+          path: Church-History-Studio-Android-v0.4.3-Hotfix.apk
           if-no-files-found: error
