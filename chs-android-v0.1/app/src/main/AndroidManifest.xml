@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
   <uses-permission android:name="android.permission.INTERNET" />
-  <application android:allowBackup="true" android:label="CHS Android 0.4.6 Vault" android:theme="@style/AppTheme" android:usesCleartextTraffic="false">
-    <activity android:name=".WriterActivityV046Flow" android:screenOrientation="unspecified" android:exported="true">
+  <application android:allowBackup="true" android:label="CHS Android 0.4.7 Safe UI" android:theme="@style/AppTheme" android:usesCleartextTraffic="false">
+    <activity android:name=".WriterActivityV047" android:screenOrientation="unspecified" android:exported="true">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />
