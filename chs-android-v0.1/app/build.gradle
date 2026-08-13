@@ -3,10 +3,10 @@ android {
   namespace 'com.churchhistorystudio.app'
   compileSdk 35
   defaultConfig {
-    applicationId 'com.churchhistorystudio.app.v045'
+    applicationId 'com.churchhistorystudio.app.v046'
     minSdk 26
     targetSdk 35
-    versionCode 45
-    versionName '0.4.5'
+    versionCode 46
+    versionName '0.4.6'
   }
 }
