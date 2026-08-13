@@ -1,7 +1,7 @@
 name: Build CHS Android APK
 on:
   push:
-    branches: ["chs-android-v0.4.4"]
+    branches: ["chs-android-v0.4.5"]
   workflow_dispatch:
 jobs:
   build:
@@ -26,10 +26,10 @@ jobs:
         working-directory: chs-android-v0.1
         run: gradle assembleDebug --stacktrace
       - name: Collect APK
-        run: cp chs-android-v0.1/app/build/outputs/apk/debug/app-debug.apk Church-History-Studio-Android-v0.4.3-Hotfix.apk
+        run: cp chs-android-v0.1/app/build/outputs/apk/debug/app-debug.apk Church-History-Studio-Android-v0.4.5-Style-Auto-Keep-Awake.apk
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Church-History-Studio-Android-v0.4.3-Hotfix
-          path: Church-History-Studio-Android-v0.4.3-Hotfix.apk
+          name: Church-History-Studio-Android-v0.4.5-Style-Auto-Keep-Awake
+          path: Church-History-Studio-Android-v0.4.5-Style-Auto-Keep-Awake.apk
           if-no-files-found: error
