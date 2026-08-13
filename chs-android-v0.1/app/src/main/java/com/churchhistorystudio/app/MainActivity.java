@@ -30,11 +30,13 @@ public class MainActivity extends Activity {
   private ValueCallback<Uri[]> fileCallback;
   private WebView web;
   private StoreDb db;
-  private String pendingBackup = null;
+  private SecureApiKeyStore secureKeys;
+  private String pendingBackup;
 
   @Override public void onCreate(Bundle state) {
     super.onCreate(state);
     db = new StoreDb();
+    secureKeys = new SecureApiKeyStore(this);
     web = new WebView(this);
     setContentView(web);
     WebSettings s = web.getSettings();
@@ -48,22 +50,20 @@ public class MainActivity extends Activity {
       @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
         if (fileCallback != null) fileCallback.onReceiveValue(null);
         fileCallback = callback;
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("text/*");
-        intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"text/csv", "text/comma-separated-values", "text/plain", "application/csv"});
-        try { startActivityForResult(intent, FILE_CHOOSER); return true; }
+        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        i.addCategory(Intent.CATEGORY_OPENABLE);
+        i.setType("text/*");
+        i.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"text/csv","text/plain","application/csv"});
+        try { startActivityForResult(i, FILE_CHOOSER); return true; }
         catch (Exception e) { fileCallback = null; showMessage("Não foi possível abrir o seletor de arquivos."); return false; }
       }
     });
-    web.loadUrl("file:///android_asset/index_v02.html");
+    web.loadUrl("file:///android_asset/index_v03.html");
   }
 
   private class StoreDb extends SQLiteOpenHelper {
     StoreDb() { super(MainActivity.this, "church_history_studio.db", null, 1); }
-    @Override public void onCreate(SQLiteDatabase d) {
-      d.execSQL("CREATE TABLE kv_store (k TEXT PRIMARY KEY, v TEXT NOT NULL)");
-    }
+    @Override public void onCreate(SQLiteDatabase d) { d.execSQL("CREATE TABLE kv_store (k TEXT PRIMARY KEY, v TEXT NOT NULL)"); }
     @Override public void onUpgrade(SQLiteDatabase d, int oldVersion, int newVersion) {}
     synchronized String getValue(String key) {
       try (Cursor c = getReadableDatabase().query("kv_store", new String[]{"v"}, "k=?", new String[]{key}, null, null, null)) {
@@ -71,7 +71,8 @@ public class MainActivity extends Activity {
       }
     }
     synchronized void setValue(String key, String value) {
-      ContentValues cv = new ContentValues(); cv.put("k", key); cv.put("v", value == null ? "" : value);
+      ContentValues cv = new ContentValues();
+      cv.put("k", key); cv.put("v", value == null ? "" : value);
       getWritableDatabase().insertWithOnConflict("kv_store", null, cv, SQLiteDatabase.CONFLICT_REPLACE);
     }
   }
@@ -80,6 +81,30 @@ public class MainActivity extends Activity {
     @JavascriptInterface public String get(String key) { return db.getValue(key); }
     @JavascriptInterface public void set(String key, String value) { db.setValue(key, value); }
     @JavascriptInterface public String storageEngine() { return "SQLite nativo · church_history_studio.db"; }
+    @JavascriptInterface public void saveDeepSeekKey(String apiKey) {
+      try { secureKeys.save(apiKey); }
+      catch (Exception e) { throw new RuntimeException(e.getMessage()); }
+    }
+    @JavascriptInterface public boolean hasDeepSeekKey() { return secureKeys.has(); }
+    @JavascriptInterface public void clearDeepSeekKey() { secureKeys.clear(); }
+    @JavascriptInterface public void testDeepSeek(String model, String requestId) {
+      new Thread(() -> {
+        try {
+          String content = DeepSeekClient.chat(requireKey(), model, "Teste de conectividade. Seja mínimo.", "Responda apenas OK.", 32, false);
+          callback("onAiTestResult", requestId, true, content.trim());
+        } catch (Exception e) { callback("onAiTestResult", requestId, false, safeError(e)); }
+      }).start();
+    }
+    @JavascriptInterface public void prepareEpisode(String payloadJson, String model, String requestId) {
+      new Thread(() -> {
+        try {
+          String content = DeepSeekClient.chat(requireKey(), model, PreparationPrompts.system(), PreparationPrompts.user(payloadJson), 16000, true);
+          content = DeepSeekClient.normalizeJsonObject(content);
+          new JSONObject(content);
+          callback("onAiPreparationResult", requestId, true, content);
+        } catch (Exception e) { callback("onAiPreparationResult", requestId, false, safeError(e)); }
+      }).start();
+    }
     @JavascriptInterface public void exportBackup(String json) {
       pendingBackup = json;
       runOnUiThread(() -> {
@@ -96,14 +121,27 @@ public class MainActivity extends Activity {
         Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         i.addCategory(Intent.CATEGORY_OPENABLE);
         i.setType("*/*");
-        i.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/json", "text/plain"});
+        i.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/json","text/plain"});
         startActivityForResult(i, BACKUP_IMPORT);
       });
     }
   }
 
+  private String requireKey() throws Exception {
+    String key = secureKeys.read();
+    if (key == null || key.isEmpty()) throw new Exception("API Key DeepSeek não configurada.");
+    return key;
+  }
+  private String safeError(Exception e) {
+    String m = e.getMessage();
+    return m == null || m.trim().isEmpty() ? e.getClass().getSimpleName() : m;
+  }
+  private void callback(String fn, String requestId, boolean ok, String data) {
+    String js = fn + "(" + JSONObject.quote(requestId) + "," + (ok ? "true" : "false") + "," + JSONObject.quote(data == null ? "" : data) + ")";
+    web.post(() -> web.evaluateJavascript(js, null));
+  }
   private void showMessage(String message) {
-    final String js = "flash(" + JSONObject.quote(message) + ")";
+    String js = "flash(" + JSONObject.quote(message) + ")";
     web.post(() -> web.evaluateJavascript(js, null));
   }
 
@@ -112,51 +150,47 @@ public class MainActivity extends Activity {
       if (in == null) throw new Exception("O Android não forneceu acesso ao arquivo.");
       byte[] buffer = new byte[8192]; int read, total = 0;
       while ((read = in.read(buffer)) != -1) {
-        total += read; if (total > maxBytes) throw new Exception("Arquivo maior que o limite permitido.");
+        total += read;
+        if (total > maxBytes) throw new Exception("Arquivo maior que o limite permitido.");
         out.write(buffer, 0, read);
       }
       if (total == 0) throw new Exception("Arquivo vazio (0 B).");
       return new String(out.toByteArray(), StandardCharsets.UTF_8);
     }
   }
-
-  private void importCsvUri(Uri uri) {
-    if (uri == null) { showMessage("Nenhum arquivo foi selecionado."); return; }
+  private void importCsv(Uri uri) {
     try {
       String text = readUri(uri, 5 * 1024 * 1024);
-      final String js = "try{importCSV(" + JSONObject.quote(text) + ")}catch(e){flash('Falha ao importar: '+(e&&e.message?e.message:e))}";
+      String js = "try{importCSV(" + JSONObject.quote(text) + ")}catch(e){flash('Falha ao importar: '+(e&&e.message?e.message:e))}";
       web.post(() -> web.evaluateJavascript(js, null));
-    } catch (Exception e) { showMessage("Falha ao ler CSV: " + e.getMessage()); }
+    } catch (Exception e) { showMessage("Falha ao ler CSV: " + safeError(e)); }
   }
-
   private void writeBackup(Uri uri) {
-    if (uri == null || pendingBackup == null) { showMessage("Backup cancelado."); return; }
+    if (uri == null || pendingBackup == null) return;
     try (OutputStream out = getContentResolver().openOutputStream(uri)) {
       if (out == null) throw new Exception("Sem acesso ao destino.");
       out.write(pendingBackup.getBytes(StandardCharsets.UTF_8)); out.flush();
       showMessage("Backup exportado com sucesso.");
-    } catch (Exception e) { showMessage("Falha ao exportar backup: " + e.getMessage()); }
+    } catch (Exception e) { showMessage("Falha ao exportar backup: " + safeError(e)); }
     finally { pendingBackup = null; }
   }
-
   private void restoreBackup(Uri uri) {
-    if (uri == null) { showMessage("Restauração cancelada."); return; }
     try {
-      String text = readUri(uri, 10 * 1024 * 1024);
-      final String js = "try{restoreBackupFromNative(" + JSONObject.quote(text) + ")}catch(e){flash('Backup inválido: '+(e&&e.message?e.message:e))}";
+      String text = readUri(uri, 15 * 1024 * 1024);
+      String js = "try{restoreBackupFromNative(" + JSONObject.quote(text) + ")}catch(e){flash('Backup inválido: '+(e&&e.message?e.message:e))}";
       web.post(() -> web.evaluateJavascript(js, null));
-    } catch (Exception e) { showMessage("Falha ao ler backup: " + e.getMessage()); }
+    } catch (Exception e) { showMessage("Falha ao ler backup: " + safeError(e)); }
   }
 
   @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     Uri selected = resultCode == RESULT_OK && data != null ? data.getData() : null;
     if (requestCode == FILE_CHOOSER) {
       if (fileCallback != null) { fileCallback.onReceiveValue(null); fileCallback = null; }
-      if (resultCode == RESULT_OK) importCsvUri(selected);
+      if (resultCode == RESULT_OK && selected != null) importCsv(selected);
       return;
     }
     if (requestCode == BACKUP_EXPORT) { if (resultCode == RESULT_OK) writeBackup(selected); else pendingBackup = null; return; }
-    if (requestCode == BACKUP_IMPORT) { if (resultCode == RESULT_OK) restoreBackup(selected); return; }
+    if (requestCode == BACKUP_IMPORT) { if (resultCode == RESULT_OK && selected != null) restoreBackup(selected); return; }
     super.onActivityResult(requestCode, resultCode, data);
   }
 }
