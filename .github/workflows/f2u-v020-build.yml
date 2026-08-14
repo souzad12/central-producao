@@ -74,6 +74,7 @@ jobs:
               p.write_text(s)
           PY
           python3 tmp-f2u-v020/patch_text.py buildsrc
+          python3 tmp-f2u-v020/patch_visual.py buildsrc
           cat > buildsrc/F2UTextAndroid/app/src/main/res/values/strings.xml <<'EOF'
           <resources>
               <string name="shortcut_new_tts_short">Novo TTS</string>
