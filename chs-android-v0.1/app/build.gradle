@@ -19,7 +19,7 @@ def stableSources = [
   'tts_ultrastrict_patch_v042.js','duration_guard_v044.js','style_router_v045.js','provider_vault_v046.js',
   'lifecycle_migration_v046.js','ui_delete_v047.js','native_csv_v049.js',
   'auto_writer_v053.js','stable_finalize_v050.js','ui_v055.js','editorial_trash_v056.js',
-  'writers_studio_v060.js','literary_writer_v2_v061.js','identity_v061.js'
+  'writers_studio_v060.js','literary_writer_v2_v061.js','literary_guardrails_v061.js','identity_v061.js'
 ]
 
 tasks.register('generateStableBundle') {
