@@ -19,5 +19,9 @@ s = s.replace(
 'Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(5.dp)){stages.forEachIndexed{i,s->Surface(modifier=Modifier.weight(1f),shape=MaterialTheme.shapes.small,color=if(i<=current)MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant){Text(if(i<current)"✓ $s" else s,Modifier.padding(vertical=7.dp,horizontal=4.dp),style=MaterialTheme.typography.labelSmall,color=if(i<=current)MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,maxLines=1)}}}',
 '''Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {\n        stages.forEachIndexed { i, s ->\n            Surface(\n                modifier = Modifier.width(72.dp),\n                shape = MaterialTheme.shapes.small,\n                color = if (i <= current) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant\n            ) {\n                Text(\n                    if (i < current) "✓ $s" else s,\n                    Modifier.padding(vertical = 7.dp, horizontal = 4.dp),\n                    style = MaterialTheme.typography.labelSmall,\n                    color = if (i <= current) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,\n                    maxLines = 1\n                )\n            }\n        }\n    }'''
 )
+s = s.replace(
+'            },Modifier.fillMaxWidth()){Icon(Icons.Default.AutoFixHigh,null);Spacer(Modifier.width(8.dp));Text("Gerar PROMPTS.txt")}',
+'            }, modifier=Modifier.fillMaxWidth()){Icon(Icons.Default.AutoFixHigh,null);Spacer(Modifier.width(8.dp));Text("Gerar PROMPTS.txt")}'
+)
 p.write_text(s)
 print("patched", p)
