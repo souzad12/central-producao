@@ -111,6 +111,8 @@ jobs:
               </shortcut>
           </shortcuts>
           EOF
+          echo '--- MainActivity.kt lines 185-205 after patches ---'
+          nl -ba buildsrc/F2UTextAndroid/app/src/main/java/com/f2u/text/MainActivity.kt | sed -n '185,205p'
 
       - name: Build F2U Text and capture log
         shell: bash
