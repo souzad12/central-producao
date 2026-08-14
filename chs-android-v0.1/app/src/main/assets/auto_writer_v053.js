@@ -1,20 +1,68 @@
 (()=>{
 window.CHS_AUTO_WRITER_VERSION='0.5.3';
-const KEY='auto_writer_session_v053';
-function read(){try{const x=NativeStore.get(KEY);return x?JSON.parse(x):null}catch{return null}}
-function write(s){window.__autoWriterV053=s;try{NativeStore.set(KEY,s?JSON.stringify(s):'')}catch{}return s}
-function clear(){window.__autoWriterV053=null;try{NativeStore.set(KEY,'')}catch{}}
-function get(){return window.__autoWriterV053||read()}
-function missing(p){const n=(p?.acts||[]).length||6;for(let i=0;i<n;i++)if(!(p.scriptActs||[])[i])return i;return-1}
-function showStep(s,index){try{const p=production.find(x=>x.code===s.code),a=(p?.acts||[])[index];overlay.innerHTML=`<div class="overlay"><div class="modal loading"><div class="spinner"></div><h2>Escrita automática</h2><p>${esc(p?.code||s.code)} · ${esc(a?.title||('Ato '+(index+1)))}</p><p class="small">Fila persistente ativa. O próximo ato só começa depois que o atual estiver confirmado no SQLite.</p><button class="btn" onclick="stopAutoWriter()">Parar após o ato atual</button></div></div>`}catch{}}
-function finish(s,p){s.active=false;s.status='complete';s.finishedAt=new Date().toISOString();write(s);setTimeout(()=>{clear();try{openWriter(p.code)}catch{};try{flash('Escrita automática concluída.')}catch{}},250)}
-function runNext(){const s=get();if(!s||!s.active)return;const p=production.find(x=>x.code===s.code);if(!p){s.active=false;s.status='error';s.error='Episódio não encontrado';return write(s)}const n=missing(p);if(n<0)return finish(s,p);s.currentIndex=n;s.status='writing';s.lastStartedAt=new Date().toISOString();s.monitorNonce=(s.monitorNonce||0)+1;write(s);window.__writerAuto=false;window.__autoWriterSession=null;showStep(s,n);setTimeout(()=>{const now=get();if(!now||!now.active||now.currentIndex!==n)return;try{writeSpecificAct(s.code,n,false)}catch(e){now.active=false;now.status='error';now.error=String(e?.message||e);write(now);try{flash('Automação interrompida: '+now.error)}catch{}}},350)}
-window.startAutoWriter=function(code){const p=production.find(x=>x.code===code);if(!p)return flash('Episódio não encontrado.');if(!confirm('O CHS continuará ato por ato até concluir o episódio. Cada ato será salvo e confirmado antes do próximo. Continuar?'))return;const n=missing(p);if(n<0)return openWriter(code);const s={version:'0.5.3',code,active:true,status:'queued',startedAt:new Date().toISOString(),currentIndex:n,completedThisRun:0,monitorNonce:0};write(s);window.__writerAuto=false;window.__autoWriterSession=null;flash('Fila automática iniciada.');runNext()};
-window.stopAutoWriter=function(){const s=get();if(s){s.active=false;s.status='stopped';s.stoppedAt=new Date().toISOString();write(s)}window.__writerAuto=false;window.__autoWriterSession=null;flash('Automação parada. O ato já em processamento poderá terminar e será salvo.')};
-function monitorSaved(req,before){let s=get();if(!s||!s.active||s.code!==req.code||s.currentIndex!==req.index)return;s.monitorNonce=(s.monitorNonce||0)+1;const nonce=s.monitorNonce;write(s);let tries=0;const timer=setInterval(()=>{const cur=get();if(!cur||!cur.active||cur.monitorNonce!==nonce){clearInterval(timer);return}const p=production.find(x=>x.code===req.code),a=p?.scriptActs?.[req.index];if(a&&a.generatedAt&&a.generatedAt!==before){clearInterval(timer);cur.completedThisRun=(cur.completedThisRun||0)+1;cur.lastSavedIndex=req.index;cur.lastSavedAt=new Date().toISOString();cur.status='saved';write(cur);overlay.innerHTML=`<div class="overlay"><div class="modal loading"><div class="spinner"></div><h2>Ato ${req.index+1} confirmado</h2><p>Salvo no SQLite. Preparando o próximo ato...</p><button class="btn" onclick="stopAutoWriter()">Parar automação</button></div></div>`;setTimeout(runNext,700);return}if(++tries>=80){clearInterval(timer);const latest=get();if(latest&&latest.active&&latest.monitorNonce===nonce){latest.status='waiting_callback';write(latest)}}},500)}
-const previousResult=window.onAiWritingResult;
-window.onAiWritingResult=function(rid,ok,data){const req=window.__writerRequest?{...window.__writerRequest}:null,s=get(),before=req?production.find(x=>x.code===req.code)?.scriptActs?.[req.index]?.generatedAt:null;window.__writerAuto=false;window.__autoWriterSession=null;const ret=previousResult(rid,ok,data);if(s&&s.active&&req&&req.code===s.code&&req.index===s.currentIndex){if(!ok){const cur=get();if(cur){cur.active=false;cur.status='error';cur.error=String(data||'Falha da API');write(cur)}try{flash('Escrita automática interrompida por falha da API.')}catch{};return ret}monitorSaved(req,before)}return ret};
-const previousOpen=window.openWriter;
-if(typeof previousOpen==='function')window.openWriter=function(code){previousOpen(code);setTimeout(()=>{try{const s=get(),m=document.querySelector('#overlay .modal');if(!s||s.code!==code||!m||m.querySelector('[data-auto-v053]'))return;const d=document.createElement('div');d.className='setting';d.dataset.autoV053='1';d.innerHTML=`<b>Escrita automática</b><p class="small">Estado: ${esc(s.status||'parada')}${s.active?' · fila ativa':''}${Number.isInteger(s.currentIndex)?' · ato '+(s.currentIndex+1):''}</p>`;const actions=m.querySelector('.actions');actions?m.insertBefore(d,actions):m.appendChild(d)}catch{}},0)};
-setTimeout(()=>{const s=read();if(s&&s.active){window.__autoWriterV053=s;window.__writerAuto=false;window.__autoWriterSession=null;const p=production.find(x=>x.code===s.code);if(p){const n=missing(p);if(n<0)finish(s,p);else{try{flash('Retomando fila automática do episódio '+s.code+'.')}catch{};runNext()}}}},1800);
+let autoState=null;
+let autoTimer=null;
+
+function firstMissing(p){
+  const total=(p?.acts||[]).length||6;
+  for(let i=0;i<total;i++) if(!(p.scriptActs||[])[i]) return i;
+  return -1;
+}
+function actStamp(p,i){
+  const a=p?.scriptActs?.[i];
+  return a?.generatedAt||a?.updatedAt||'';
+}
+function stopWatch(){
+  if(autoTimer){ clearInterval(autoTimer); autoTimer=null; }
+}
+function finishAuto(){
+  const code=autoState?.code;
+  stopWatch(); autoState=null;
+  window.__writerAuto=false; window.__autoWriterSession=null;
+  if(code){ try{ openWriter(code); }catch(e){} }
+  try{ flash('Escrita automática concluída.'); }catch(e){}
+}
+function watchSaved(index,baseline){
+  stopWatch();
+  autoTimer=setInterval(()=>{
+    if(!autoState?.active){ stopWatch(); return; }
+    const p=production.find(x=>x.code===autoState.code);
+    if(!p){ stopAutoWriter(); return; }
+    const current=actStamp(p,index);
+    if(current && current!==baseline){
+      stopWatch();
+      try{ flash(`Ato ${index+1} salvo. Continuando automaticamente...`); }catch(e){}
+      setTimeout(runAutoStep,700);
+    }
+  },1000);
+}
+function runAutoStep(){
+  if(!autoState?.active) return;
+  const p=production.find(x=>x.code===autoState.code);
+  if(!p){ stopAutoWriter(); return; }
+  const index=firstMissing(p);
+  if(index<0){ finishAuto(); return; }
+  autoState.index=index;
+  const baseline=actStamp(p,index);
+  window.__writerAuto=false;
+  window.__autoWriterSession=null;
+  watchSaved(index,baseline);
+  try{ writeSpecificAct(autoState.code,index,false); }
+  catch(e){ stopAutoWriter(); try{ flash('Automação interrompida: '+(e?.message||e)); }catch(x){} }
+}
+window.startAutoWriter=function(code){
+  const p=production.find(x=>x.code===code);
+  if(!p) return flash('Episódio não encontrado.');
+  if(!confirm('Escrever automaticamente todos os atos restantes? O próximo ato só começará quando o atual estiver salvo.')) return;
+  autoState={code,active:true,index:firstMissing(p)};
+  window.__writerAuto=false; window.__autoWriterSession=null;
+  try{ flash('Escrita automática iniciada.'); }catch(e){}
+  runAutoStep();
+};
+window.stopAutoWriter=function(){
+  if(autoState) autoState.active=false;
+  stopWatch(); autoState=null;
+  window.__writerAuto=false; window.__autoWriterSession=null;
+  try{ flash('Escrita automática interrompida.'); }catch(e){}
+};
 })();
