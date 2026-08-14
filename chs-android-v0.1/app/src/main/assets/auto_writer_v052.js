@@ -1,0 +1,39 @@
+(()=>{
+window.CHS_AUTO_WRITER_VERSION='0.5.2';
+function missing(p){const n=(p?.acts||[]).length||6;for(let i=0;i<n;i++)if(!(p.scriptActs||[])[i])return i;return-1}
+window.startAutoWriter=function(code){
+ const p=production.find(x=>x.code===code);if(!p)return flash('Episódio não encontrado.');
+ if(!confirm('O Writer continuará ato por ato e só avançará depois de confirmar o salvamento do ato atual. Continuar?'))return;
+ const n=missing(p);if(n<0)return openWriter(code);
+ window.__autoWriterSession={code,active:true,startedAt:Date.now(),completed:0};
+ window.__writerAuto=false;
+ flash('Escrita automática iniciada.');
+ writeSpecificAct(code,n,false);
+};
+window.stopAutoWriter=function(){if(window.__autoWriterSession)window.__autoWriterSession.active=false;window.__writerAuto=false;flash('Escrita automática interrompida após o ato atual.')};
+const old=window.onAiWritingResult;
+window.onAiWritingResult=function(rid,ok,data){
+ const req=window.__writerRequest?{...window.__writerRequest}:null;
+ const session=window.__autoWriterSession;
+ const before=req?production.find(x=>x.code===req.code)?.scriptActs?.[req.index]?.generatedAt:null;
+ const ret=old(rid,ok,data);
+ if(session&&session.active&&req&&req.code===session.code){
+   if(!ok){session.active=false;return ret}
+   setTimeout(()=>{
+     try{
+       if(!session.active)return;
+       const p=production.find(x=>x.code===session.code),a=p?.scriptActs?.[req.index];
+       if(!p||!a||a.generatedAt===before)return;
+       session.completed++;
+       const n=missing(p);
+       if(n<0){session.active=false;window.__autoWriterSession=null;openWriter(p.code);flash('Escrita automática concluída.');return}
+       overlay.innerHTML=`<div class="overlay"><div class="modal loading"><div class="spinner"></div><h2>Ato ${req.index+1} salvo</h2><p>Preparando automaticamente o ato ${n+1}.</p><button class="btn" onclick="stopAutoWriter()">Parar automação</button></div></div>`;
+       setTimeout(()=>{if(session.active)writeSpecificAct(p.code,n,false)},650);
+     }catch(e){session.active=false;console.error('Auto Writer',e);flash('Automação interrompida: '+(e?.message||e))}
+   },250);
+ }
+ return ret;
+};
+const oldPrep=window.showPreparation;
+if(typeof oldPrep==='function')window.showPreparation=function(code){oldPrep(code);try{const p=production.find(x=>x.code===code),v=p?.narrativeVoice,m=document.querySelector('#overlay .modal');if(v&&m&&!m.querySelector('[data-narrative-voice]')){const d=document.createElement('div');d.className='field wide';d.dataset.narrativeVoice='1';d.innerHTML=`<b>Voz narrativa AUTO</b>${esc(v.label||v.perspective||'')}${v.whyItFits?`<p class="small">${esc(v.whyItFits)}</p>`:''}`;const acts=[...m.querySelectorAll('h3')].find(x=>/Atos/i.test(x.textContent||''));acts?m.insertBefore(d,acts):m.appendChild(d)}}catch(e){console.warn(e)}};
+})();
