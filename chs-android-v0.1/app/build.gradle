@@ -21,26 +21,19 @@ def stableSources = [
 ]
 
 tasks.register('generateStableBundle') {
-  def assetsDir=file('src/main/assets'), output=file('src/main/assets/stable_bundle_v050.js')
-  inputs.files(stableSources.collect { new File(assetsDir,it) }); outputs.file(output)
+  def assetsDir=file('src/main/assets')
+  def output=file('src/main/assets/stable_bundle_v050.js')
+  inputs.files(stableSources.collect { new File(assetsDir,it) })
+  outputs.file(output)
   doLast {
     output.setText('/* CHS ANDROID v0.5.2 STABLE */\n','UTF-8')
     stableSources.each { name ->
       def source=new File(assetsDir,name)
       if(!source.exists()) throw new GradleException('Fonte ausente: '+name)
-      output.append('\n/* '+name+' */\n'+source.getText('UTF-8')+'\n;\n','UTF-8')
+      output.append('\n/* '+name+' */\n','UTF-8')
+      output.append(source.getText('UTF-8'),'UTF-8')
+      output.append('\n;\n','UTF-8')
     }
-    output.append('''
-;(function(){
-var css=document.createElement('style');
-css.textContent='html.chs-light{--bg:#f5f2eb;--panel:#fff;--panel2:#f0ece3;--line:#d8d1c4;--gold:#9f742c;--muted:#6e6960;--text:#1c1b18;color-scheme:light}html.chs-light body{background:#f5f2eb;color:#1c1b18}html.chs-light .top{background:#faf8f3}html.chs-light aside{background:#f7f4ed}html.chs-light .nav{color:#494641}html.chs-light .nav.active{background:#e8e2d7;color:#111}html.chs-light .btn{background:#eee9df;color:#222;border-color:#cfc7ba}html.chs-light .btn.primary{background:#9f742c;color:#fff}html.chs-light input,html.chs-light select,html.chs-light textarea{background:#fff!important;color:#222!important}html.chs-light .syn{color:#504d47}html.chs-light .modal{background:#fff;color:#222}html.chs-light .field,html.chs-light .act,html.chs-light .scene,html.chs-light .claim{background:#f2eee6;color:#222}';
-document.head.appendChild(css);
-function mode(){try{return NativeStore.get('ui_theme')||'dark'}catch(e){return 'dark'}}
-window.setChsTheme=function(v){if(v!=='light')v='dark';try{NativeStore.set('ui_theme',v)}catch(e){}document.documentElement.classList.toggle('chs-light',v==='light')};
-setChsTheme(mode());
-var old=window.renderSettings;if(typeof old==='function')window.renderSettings=function(m){old(m);m.innerHTML=m.innerHTML.replace(/v0\.5\.0|v0\.5\.1/g,'v0.5.2');var d=document.createElement('div');d.className='setting';d.innerHTML='<h3>Aparência</h3><p>Tema da interface.</p><button class="btn" id="themeDark">Escuro</button> <button class="btn" id="themeLight">Claro</button>';m.appendChild(d);d.querySelector('#themeDark').onclick=function(){setChsTheme('dark');render()};d.querySelector('#themeLight').onclick=function(){setChsTheme('light');render()};};
-})();
-''','UTF-8')
   }
 }
 
