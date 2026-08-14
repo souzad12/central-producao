@@ -4,11 +4,11 @@ android {
   namespace 'com.churchhistorystudio.app'
   compileSdk 35
   defaultConfig {
-    applicationId 'com.churchhistorystudio.app.v056'
+    applicationId 'com.churchhistorystudio.app.v057'
     minSdk 26
     targetSdk 35
-    versionCode 56
-    versionName '0.5.6'
+    versionCode 57
+    versionName '0.5.7'
   }
   sourceSets { main { manifest.srcFile 'src/main/AndroidManifestStable.xml' } }
 }
@@ -17,7 +17,7 @@ def stableSources = [
   'ai_patch_v03.js','writer_patch_v04.js','anti_repeat_patch_v041.js','anti_repeat_ui_v041.js',
   'tts_ultrastrict_patch_v042.js','duration_guard_v044.js','style_router_v045.js','provider_vault_v046.js',
   'lifecycle_migration_v046.js','ui_delete_v047.js','native_csv_v049.js',
-  'auto_writer_v053.js','stable_finalize_v050.js','ui_v055.js','editorial_trash_v056.js'
+  'auto_writer_v053.js','stable_finalize_v050.js','ui_v055.js','editorial_trash_v056.js','identity_v057.js'
 ]
 
 tasks.register('generateStableBundle') {
@@ -26,7 +26,7 @@ tasks.register('generateStableBundle') {
   inputs.files(stableSources.collect { new File(assetsDir,it) })
   outputs.file(output)
   doLast {
-    output.setText('/* CHS ANDROID v0.5.6 NOVELA HISTORICA + TRASH v0.4.8 RESTORED */\n','UTF-8')
+    output.setText('/* CHS ANDROID v0.5.7 JS DIALOGS FIX */\n','UTF-8')
     stableSources.each { name ->
       def source=new File(assetsDir,name)
       if(!source.exists()) throw new GradleException('Fonte ausente: '+name)
