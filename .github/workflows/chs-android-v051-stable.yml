@@ -1,7 +1,7 @@
-name: Build CHS Android v0.5.1 STABLE
+name: Build CHS Android v0.5.2 STABLE
 on:
   push:
-    branches: ["chs-android-v0.5.1"]
+    branches: ["chs-android-v0.5.2"]
   workflow_dispatch:
 jobs:
   build:
@@ -20,8 +20,8 @@ jobs:
       - name: Build APK
         working-directory: chs-android-v0.1
         run: gradle assembleDebug --stacktrace
-      - run: cp chs-android-v0.1/app/build/outputs/apk/debug/app-debug.apk Church-History-Studio-Android-v0.5.1-STABLE.apk
+      - run: cp chs-android-v0.1/app/build/outputs/apk/debug/app-debug.apk Church-History-Studio-Android-v0.5.2-STABLE.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Church-History-Studio-Android-v0.5.1-STABLE
-          path: Church-History-Studio-Android-v0.5.1-STABLE.apk
+          name: Church-History-Studio-Android-v0.5.2-STABLE
+          path: Church-History-Studio-Android-v0.5.2-STABLE.apk
