@@ -5,59 +5,55 @@ import org.json.JSONObject;
 final class WriterPrompts {
   static String system() {
     return WriterPromptsV045.system() +
-      " Preserve a voz narrativa escolhida pelo Showrunner quando narrativeVoice existir. " +
-      "O produto falado do CHS deve soar como NOVELA HISTÓRICA RECONSTRUÍDA: cena, conflito, ação, decisão, pressão, virada e consequência. Não deve soar como aula, verbete, documentário arqueológico ou relatório de hipóteses, salvo quando a própria pauta for explicitamente historiográfica. " +
-      "Para pautas históricas comuns, abra dentro do momento histórico; não abra em escavações modernas, museus ou com o narrador explicando sua investigação. " +
-      "Priorize agentes históricos em situação, decisões públicas, confrontos, alianças, rupturas, deslocamentos e efeitos humanos. Evite longos parágrafos de contexto antes que algo aconteça. " +
-      "Evidência, verificação e debate historiográfico são guardrails. Quando uma ressalva de rigor precisar ser preservada mas não for parte da experiência dramática, coloque-a em {NOTA HISTÓRICA: ...}; essa nota é técnica e não deve integrar a narração falada. " +
-      "Não repita continuamente fórmulas como 'não sabemos', 'a arqueologia sugere', 'o historiador pode inferir', 'há várias hipóteses'. Use-as na fala apenas quando a incerteza for o próprio conflito do episódio. " +
-      "Nunca invente diálogo privado, pensamento, memória, confissão ou estado mental. Reconstrução B permite encadear ações e circunstâncias plausíveis sustentadas pelo pacote, não fabricar consciência privada. " +
-      "Nunca transforme personagem histórico em narrador fictício de primeira pessoa.";
+      " CONTRATO v0.6.0: escreva LITERATURA HISTÓRICA DRAMATIZADA baseada em fatos reais. É PROIBIDO transformar o episódio em sermão, estudo bíblico, aula teológica, comentário exegético, verbete ou documentário expositivo, salvo ordem explícita. " +
+      "A fonte não é modelo de prosa: não copie nem parafraseie longamente Bíblia, crônica ou documento. Use fontes como fatos, limites, falas atestadas e contexto. " +
+      "A superfície falada deve ser majoritariamente CENA: personagens em situação, ação, subtexto, diálogo, obstáculo, pressão, decisão, virada e consequência. Contexto só entra quando aumenta a força da cena seguinte. " +
+      "Meta de proporção: aproximadamente 60-75% cenas dramatizadas, 20-35% narração de ligação/contexto e no máximo 10% citação/paráfrase direta de fonte. Não force números artificialmente; use-os como disciplina editorial. " +
+      "RECONSTRUÇÃO B É PERMITIDA: diálogo plausível, silêncios, gestos, pequenas ações, encontros e circunstâncias compatíveis com fatos, época, posição e relações. Nunca apresente fala reconstruída como citação autêntica. " +
+      "LICENÇA C É PERMITIDA de modo controlado para literatura, inclusive personagens menores/compostos, desde que não altere fatos centrais, resultados históricos, cronologia, documentos ou doutrina e permaneça indicada nas notas técnicas. " +
+      "Não declare pensamento privado como fato; manifeste psicologia por comportamento, contradição, subtexto, escolhas e consequências. " +
+      "SURPRESA: busque reversões verdadeiras, revelação retardada, falsa resolução, ironia histórica, retorno de elemento e consequências inesperadas. Não invente twist factual. Cada ato deve terminar em estado diferente daquele em que começou. " +
+      "ANTI-REDUNDÂNCIA OBRIGATÓRIA: não repetir informação, conflito, metáfora, explicação, pergunta ou revelação já utilizada no episódio. Não recontar episódios anteriores e não roubar episódios futuros. " +
+      "Se writersStudio.roomDecision existir, trate writerInstruction como DIREÇÃO DE SHOWRUNNER obrigatória, subordinada apenas ao Historical Guard. A skill AUTO pode mudar por ato/cena. " +
+      "HANDOFF FINAL: no último ato/epílogo, feche o conflito atual e termine com uma consequência, imagem ou pergunta histórica real que naturalmente abre o próximo episódio. Nunca diga 'no próximo episódio veremos' e não use CTA publicitário. " +
+      "Notas de rigor ficam em {NOTA HISTÓRICA: ...} ou {RIGOR: ...} e são removidas do TTS. Evite na fala fórmulas como 'o texto não diz', 'não sabemos', 'a arqueologia sugere' salvo quando a incerteza for o próprio drama.";
   }
 
   static String user(String payloadJson) throws Exception {
     String base = WriterPromptsV045.user(payloadJson);
     JSONObject root = new JSONObject(payloadJson);
     JSONObject prep = root.optJSONObject("preparation");
-    JSONObject voice = prep == null ? null : prep.optJSONObject("narrativeVoice");
-    JSONObject posture = prep == null ? null : prep.optJSONObject("researchPosture");
-    JSONObject style = prep == null ? null : prep.optJSONObject("narrativeStyle");
+    JSONObject studio = root.optJSONObject("writersStudio");
+    JSONObject room = studio == null ? null : studio.optJSONObject("roomDecision");
     StringBuilder out = new StringBuilder(base);
 
-    out.append("\nMODO EDITORIAL OBRIGATÓRIO: NOVELA HISTÓRICA RECONSTRUÍDA. Cada ato deve avançar por cenas. Em cada cena identifique na própria prosa um agente, algo que está em jogo, uma pressão/obstáculo e uma mudança ao final. Não escreva uma sucessão de parágrafos enciclopédicos sobre o tema.");
-    out.append("\nSUPERFÍCIE TTS: mantenha a experiência falada dramática. Informações de bastidor, classificação, incerteza metodológica, cautela arqueológica ou observação de fonte que não precisem ser ouvidas devem ir em {NOTA HISTÓRICA: ...}, {RIGOR: ...} ou outra chave técnica, para serem removidas pelo TTS Ultraestrito.");
-    out.append("\nABERTURA: salvo quando a pauta for explicitamente arqueológica/historiográfica, comece dentro do passado em movimento, não no presente olhando ruínas e não com uma pergunta de pesquisador.");
-    out.append("\nRITMO: contexto só entra quando modifica a cena. Evite explicar primeiro tudo sobre cidade, povo, geografia, arqueologia e depois começar o drama. Distribua contexto dentro da ação.");
+    out.append("\nMODO EDITORIAL: LITERATURA HISTÓRICA DRAMATIZADA. NÃO escreva um resumo do material-fonte. Faça o leitor viver uma progressão de cenas.");
+    out.append("\nREGRA DE CENA: toda cena precisa de agente, desejo/objetivo, obstáculo/pressão, virada e consequência. Se uma cena apenas explica, reestruture-a para que a informação apareça porque alguém precisa agir, escolher, confrontar, esconder, perder ou descobrir algo.");
+    out.append("\nREGRA DE FONTE: não reproduza em sequência longos blocos bíblicos ou documentais. Falas atestadas podem ser citadas brevemente. Entre os marcos documentados, use reconstrução B controlada e licença C controlada quando dramaturgicamente necessária.");
+    out.append("\nREGRA DE SURPRESA: preserve fairness. O twist deve nascer de informação verdadeira guardada, consequência histórica, mudança de perspectiva ou reversão causal; nunca de fato inventado.");
+    out.append("\nREGRA DE REDUNDÂNCIA: antes de cada parágrafo, pergunte funcionalmente se ele acrescenta ação, nova informação, nova pressão, nova imagem ou nova consequência. Se apenas repete o que já foi dito, corte.");
 
-    if (voice == null) {
-      out.append("\nVOZ NARRATIVA: terceira pessoa histórica como base. O narrador acompanha o drama sem se transformar em professor ou personagem fictício.");
-    } else {
-      String perspective = voice.optString("perspective", "TERCEIRA_PESSOA_HISTORICA");
-      String label = voice.optString("label", perspective);
-      String rules = voice.optJSONArray("rules") == null ? "[]" : voice.optJSONArray("rules").toString();
-      out.append("\nVOZ NARRATIVA ESCOLHIDA PELO SHOWRUNNER: ").append(label).append(" (").append(perspective).append("). Regras: ").append(rules)
-        .append(". Preserve-a sem deixar a pessoa gramatical dominar o gênero. O gênero continua sendo novela histórica. Primeira pessoa singular de personagem somente quando for citação ou documento sustentado pelo pacote.");
-    }
-
-    String primary = style == null ? "DRAMA_HISTORICO_RECONSTRUIDO" : style.optString("primary", "DRAMA_HISTORICO_RECONSTRUIDO");
-    String secondary = style == null ? "" : style.optString("secondary", "");
-    out.append("\nMOTOR DRAMÁTICO: ").append(primary).append(".");
-    if (!secondary.isEmpty()) {
-      out.append(" LENTE LITERÁRIA: ").append(secondary).append(". A lente só modula ritmo, foco psicológico, escala e tensão; ela não muda o episódio para ensaio ou documentário.");
-      if ("DOSTOIEVSKIANA_HISTORICA".equals(secondary)) {
-        out.append(" Na lente dostoievskiana, concentre-se em pressão moral, lealdade, poder, culpa, ambição, medo, contradições públicas e consequências entre pessoas, sempre sem inventar interioridade privada.");
+    if (studio != null) {
+      out.append("\nWRITERS' STUDIO: modo=").append(studio.optString("mode","AUTO_SURPRISE"))
+        .append("; preferência=").append(studio.optString("preferredSkill","AUTO"))
+        .append("; direção manual=").append(studio.optString("manualDirection",""))
+        .append("; POV focal=").append(studio.optString("povFocus",""));
+      if (room != null) {
+        out.append("\nDECISÃO DA SALA (OBRIGATÓRIA): ").append(room.toString());
+        String instruction = room.optString("writerInstruction", "");
+        if (!instruction.isEmpty()) out.append("\nDIREÇÃO DO SHOWRUNNER: ").append(instruction);
       }
     }
 
-    String mode = posture == null ? "BACKGROUND_GUARD" : posture.optString("mode", "BACKGROUND_GUARD");
-    if ("EXPLICIT_INVESTIGATION".equals(mode)) {
-      out.append("\nPOSTURA DE PESQUISA: EXPLICIT_INVESTIGATION. A investigação pode entrar na fala apenas quando muda o sentido de uma cena ou é a própria pauta. Não faça inventário de hipóteses; dramatize o problema e concentre a discussão de evidências em passagens curtas.");
-    } else {
-      out.append("\nPOSTURA DE PESQUISA: BACKGROUND_GUARD. Não narre o processo historiográfico. Use as incertezas para limitar o que você afirma e para gerar notas técnicas, não como eixo falado.");
+    JSONObject handoff = prep == null ? null : prep.optJSONObject("seriesHandoff");
+    int actIndex = root.optInt("actIndex", 0);
+    int actCount = prep != null && prep.optJSONArray("acts") != null ? prep.optJSONArray("acts").length() : 6;
+    if (actIndex >= Math.max(0, actCount - 1)) {
+      out.append("\nEPÍLOGO/HANDOFF: feche o conflito principal deste episódio. Depois abra uma consequência real para a continuidade serial sem entregar o clímax do próximo.");
+      if (handoff != null) out.append(" Diretriz de continuidade: ").append(handoff.toString());
     }
 
-    out.append("\nREGRA DE RECONSTRUÇÃO: transforme fatos A e reconstruções B sustentáveis em cenas narradas com progressão. Conteúdo C só pode existir explicitamente marcado como ficção dramática e nunca como prova. D deve ser tratado como disputado. Não invente diálogo privado nem estado mental.");
-    out.append("\nCONTINUIDADE: não consuma material reservado aos próximos episódios. Se um tema futuro for necessário, faça apenas menção mínima ou prenúncio, sem dramatizar sua sequência central, clímax ou payoff.");
+    out.append("\nSAÍDA: preserve o JSON de cenas exigido pelo Writer legado, mas productionText deve conter literatura + blocos técnicos entre chaves; ttsText deve conter somente a narração/dialogação falável. Não use markdown no texto narrável.");
     return out.toString();
   }
 }
