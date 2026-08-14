@@ -111,17 +111,46 @@ jobs:
           </shortcuts>
           EOF
 
-      - name: Build F2U Text
-        working-directory: buildsrc/F2UTextAndroid
-        run: gradle --no-daemon :app:assembleDebug
+      - name: Build F2U Text and capture log
+        shell: bash
+        run: |
+          set +e
+          cd buildsrc/F2UTextAndroid
+          gradle --no-daemon :app:assembleDebug 2>&1 | tee ../../text-build.log
+          code=${PIPESTATUS[0]}
+          echo "$code" > ../../text-exit.txt
+          exit 0
 
-      - name: Build F2U Visual
-        working-directory: buildsrc/F2UVisualAndroid
-        run: gradle --no-daemon :app:assembleDebug
+      - name: Build F2U Visual and capture log
+        shell: bash
+        run: |
+          set +e
+          cd buildsrc/F2UVisualAndroid
+          gradle --no-daemon :app:assembleDebug 2>&1 | tee ../../visual-build.log
+          code=${PIPESTATUS[0]}
+          echo "$code" > ../../visual-exit.txt
+          exit 0
+
+      - name: Upload diagnostic logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: F2U-v0.2-build-logs
+          path: |
+            text-build.log
+            visual-build.log
+            text-exit.txt
+            visual-exit.txt
+          if-no-files-found: warn
+          retention-days: 1
 
       - name: Collect and verify APKs
         shell: bash
         run: |
+          echo "Text exit: $(cat text-exit.txt)"
+          echo "Visual exit: $(cat visual-exit.txt)"
+          test "$(cat text-exit.txt)" = "0"
+          test "$(cat visual-exit.txt)" = "0"
           mkdir -p out
           cp buildsrc/F2UTextAndroid/app/build/outputs/apk/debug/app-debug.apk out/F2U-Text-v0.2.0.apk
           cp buildsrc/F2UVisualAndroid/app/build/outputs/apk/debug/app-debug.apk out/F2U-Visual-v0.2.0.apk
