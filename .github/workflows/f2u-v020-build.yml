@@ -73,6 +73,42 @@ jobs:
                   s += '\n\nkotlin {\n    compilerOptions {\n        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)\n    }\n}\n'
               p.write_text(s)
           PY
+          cat > buildsrc/F2UTextAndroid/app/src/main/res/values/strings.xml <<'EOF'
+          <resources>
+              <string name="shortcut_new_tts_short">Novo TTS</string>
+              <string name="shortcut_new_tts_long">Novo projeto de texto</string>
+              <string name="shortcut_last_project_short">Último projeto</string>
+              <string name="shortcut_last_project_long">Abrir último projeto</string>
+          </resources>
+          EOF
+          cat > buildsrc/F2UTextAndroid/app/src/main/res/xml/shortcuts.xml <<'EOF'
+          <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+              <shortcut android:shortcutId="new_project" android:enabled="true" android:icon="@drawable/ic_text_mono" android:shortcutShortLabel="@string/shortcut_new_tts_short" android:shortcutLongLabel="@string/shortcut_new_tts_long">
+                  <intent android:action="android.intent.action.VIEW" android:targetPackage="com.f2u.text" android:targetClass="com.f2u.text.MainActivity"><extra android:name="shortcut" android:value="new"/></intent>
+              </shortcut>
+              <shortcut android:shortcutId="last_project" android:enabled="true" android:icon="@drawable/ic_text_mono" android:shortcutShortLabel="@string/shortcut_last_project_short" android:shortcutLongLabel="@string/shortcut_last_project_long">
+                  <intent android:action="android.intent.action.VIEW" android:targetPackage="com.f2u.text" android:targetClass="com.f2u.text.MainActivity"><extra android:name="shortcut" android:value="last"/></intent>
+              </shortcut>
+          </shortcuts>
+          EOF
+          cat > buildsrc/F2UVisualAndroid/app/src/main/res/values/strings.xml <<'EOF'
+          <resources>
+              <string name="shortcut_new_batch_short">Novo lote</string>
+              <string name="shortcut_new_batch_long">Nova criação visual</string>
+              <string name="shortcut_gallery_short">Galeria</string>
+              <string name="shortcut_gallery_long">Abrir galeria recente</string>
+          </resources>
+          EOF
+          cat > buildsrc/F2UVisualAndroid/app/src/main/res/xml/shortcuts.xml <<'EOF'
+          <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+              <shortcut android:shortcutId="new_batch" android:enabled="true" android:icon="@drawable/ic_visual_mono" android:shortcutShortLabel="@string/shortcut_new_batch_short" android:shortcutLongLabel="@string/shortcut_new_batch_long">
+                  <intent android:action="android.intent.action.VIEW" android:targetPackage="com.f2u.visual" android:targetClass="com.f2u.visual.MainActivity"><extra android:name="shortcut" android:value="create"/></intent>
+              </shortcut>
+              <shortcut android:shortcutId="gallery" android:enabled="true" android:icon="@drawable/ic_visual_mono" android:shortcutShortLabel="@string/shortcut_gallery_short" android:shortcutLongLabel="@string/shortcut_gallery_long">
+                  <intent android:action="android.intent.action.VIEW" android:targetPackage="com.f2u.visual" android:targetClass="com.f2u.visual.MainActivity"><extra android:name="shortcut" android:value="gallery"/></intent>
+              </shortcut>
+          </shortcuts>
+          EOF
 
       - name: Build F2U Text
         working-directory: buildsrc/F2UTextAndroid
