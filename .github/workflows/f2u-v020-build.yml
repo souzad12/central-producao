@@ -56,6 +56,19 @@ jobs:
           for p in [Path('buildsrc/F2UTextAndroid/app/build.gradle.kts'), Path('buildsrc/F2UVisualAndroid/app/build.gradle.kts')]:
               s = p.read_text()
               s = s.replace('    kotlinOptions { jvmTarget = "17" }\n', '')
+              replacements = {
+                  'compose-bom:2026.06.00': 'compose-bom:2025.09.01',
+                  'activity-compose:1.13.0': 'activity-compose:1.11.0',
+                  'lifecycle-runtime-compose:2.11.0': 'lifecycle-runtime-compose:2.9.4',
+                  'lifecycle-viewmodel-compose:2.11.0': 'lifecycle-viewmodel-compose:2.9.4',
+                  'lifecycle-viewmodel-ktx:2.11.0': 'lifecycle-viewmodel-ktx:2.9.4',
+                  'room-runtime:2.8.4': 'room-runtime:2.8.1',
+                  'room-ktx:2.8.4': 'room-ktx:2.8.1',
+                  'room-compiler:2.8.4': 'room-compiler:2.8.1',
+                  'work-runtime-ktx:2.11.2': 'work-runtime-ktx:2.10.5',
+              }
+              for old, new in replacements.items():
+                  s = s.replace(old, new)
               if 'jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)' not in s:
                   s += '\n\nkotlin {\n    compilerOptions {\n        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)\n    }\n}\n'
               p.write_text(s)
