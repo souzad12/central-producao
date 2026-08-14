@@ -51,6 +51,15 @@ jobs:
           sed -i 's/compileSdk = 37/compileSdk = 36/g' buildsrc/F2UVisualAndroid/app/build.gradle.kts
           sed -i 's/version "9.2.0"/version "8.13.2"/g' buildsrc/F2UTextAndroid/build.gradle.kts
           sed -i 's/version "9.2.0"/version "8.13.2"/g' buildsrc/F2UVisualAndroid/build.gradle.kts
+          python3 - <<'PY'
+          from pathlib import Path
+          for p in [Path('buildsrc/F2UTextAndroid/app/build.gradle.kts'), Path('buildsrc/F2UVisualAndroid/app/build.gradle.kts')]:
+              s = p.read_text()
+              s = s.replace('    kotlinOptions { jvmTarget = "17" }\n', '')
+              if 'jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)' not in s:
+                  s += '\n\nkotlin {\n    compilerOptions {\n        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)\n    }\n}\n'
+              p.write_text(s)
+          PY
 
       - name: Build F2U Text
         working-directory: buildsrc/F2UTextAndroid
