@@ -1,7 +1,7 @@
-name: Build CHS Android v0.5.3 NOVELA HISTORICA
+name: Build CHS Android v0.5.4 LIXEIRA FIX
 on:
   push:
-    branches: ["chs-android-v0.5.3"]
+    branches: ["chs-android-v0.5.4"]
   workflow_dispatch:
 jobs:
   build:
@@ -20,8 +20,8 @@ jobs:
       - name: Build APK
         working-directory: chs-android-v0.1
         run: gradle assembleDebug --stacktrace
-      - run: cp chs-android-v0.1/app/build/outputs/apk/debug/app-debug.apk Church-History-Studio-Android-v0.5.3-NOVELA-HISTORICA.apk
+      - run: cp chs-android-v0.1/app/build/outputs/apk/debug/app-debug.apk Church-History-Studio-Android-v0.5.4-LIXEIRA-FIX.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Church-History-Studio-Android-v0.5.3-NOVELA-HISTORICA
-          path: Church-History-Studio-Android-v0.5.3-NOVELA-HISTORICA.apk
+          name: Church-History-Studio-Android-v0.5.4-LIXEIRA-FIX
+          path: Church-History-Studio-Android-v0.5.4-LIXEIRA-FIX.apk
