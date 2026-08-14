@@ -1,0 +1,78 @@
+name: Build F2U v0.2 APKs
+
+on:
+  push:
+    branches:
+      - chatgpt/f2u-v020-build-20260814
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 37
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager "platforms;android-37" "build-tools;36.0.0"
+
+      - name: Set up Gradle 9.4.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.4.1'
+
+      - name: Restore and verify source package
+        shell: bash
+        run: |
+          cat tmp-f2u-v020/source.part* > /tmp/f2u-v020.b64
+          base64 --decode /tmp/f2u-v020.b64 > /tmp/f2u-v020.zip
+          unzip -t /tmp/f2u-v020.zip
+          mkdir -p buildsrc
+          unzip -q /tmp/f2u-v020.zip -d buildsrc
+          test -f buildsrc/F2UTextAndroid/app/build.gradle.kts
+          test -f buildsrc/F2UVisualAndroid/app/build.gradle.kts
+
+      - name: Build F2U Text
+        working-directory: buildsrc/F2UTextAndroid
+        run: gradle --no-daemon :app:assembleDebug
+
+      - name: Build F2U Visual
+        working-directory: buildsrc/F2UVisualAndroid
+        run: gradle --no-daemon :app:assembleDebug
+
+      - name: Collect and verify APKs
+        shell: bash
+        run: |
+          mkdir -p out
+          cp buildsrc/F2UTextAndroid/app/build/outputs/apk/debug/app-debug.apk out/F2U-Text-v0.2.0.apk
+          cp buildsrc/F2UVisualAndroid/app/build/outputs/apk/debug/app-debug.apk out/F2U-Visual-v0.2.0.apk
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)
+          test -n "$APKSIGNER"
+          "$APKSIGNER" verify --verbose out/F2U-Text-v0.2.0.apk
+          "$APKSIGNER" verify --verbose out/F2U-Visual-v0.2.0.apk
+          sha256sum out/*.apk > out/SHA256SUMS.txt
+          ls -lh out
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: F2U-Android-APKs-v0.2.0
+          path: out/*
+          if-no-files-found: error
+          retention-days: 1
