@@ -73,6 +73,7 @@ jobs:
                   s += '\n\nkotlin {\n    compilerOptions {\n        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)\n    }\n}\n'
               p.write_text(s)
           PY
+          python3 tmp-f2u-v020/patch_text.py buildsrc
           cat > buildsrc/F2UTextAndroid/app/src/main/res/values/strings.xml <<'EOF'
           <resources>
               <string name="shortcut_new_tts_short">Novo TTS</string>
