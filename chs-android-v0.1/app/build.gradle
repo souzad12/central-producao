@@ -4,30 +4,27 @@ android {
   namespace 'com.churchhistorystudio.app'
   compileSdk 35
   defaultConfig {
-    applicationId 'com.churchhistorystudio.app.v051'
+    applicationId 'com.churchhistorystudio.app.v052'
     minSdk 26
     targetSdk 35
-    versionCode 51
-    versionName '0.5.1'
+    versionCode 52
+    versionName '0.5.2'
   }
-  sourceSets {
-    main { manifest.srcFile 'src/main/AndroidManifestStable.xml' }
-  }
+  sourceSets { main { manifest.srcFile 'src/main/AndroidManifestStable.xml' } }
 }
 
 def stableSources = [
   'ai_patch_v03.js','writer_patch_v04.js','anti_repeat_patch_v041.js','anti_repeat_ui_v041.js',
   'tts_ultrastrict_patch_v042.js','duration_guard_v044.js','style_router_v045.js','provider_vault_v046.js',
-  'lifecycle_migration_v046.js','ui_delete_v047.js','editorial_trash_v048.js','native_csv_v049.js','stable_finalize_v050.js'
+  'lifecycle_migration_v046.js','ui_delete_v047.js','editorial_trash_v048.js','native_csv_v049.js',
+  'stable_finalize_v050.js','auto_writer_v052.js'
 ]
 
 tasks.register('generateStableBundle') {
-  def assetsDir=file('src/main/assets')
-  def output=file('src/main/assets/stable_bundle_v050.js')
-  inputs.files(stableSources.collect { new File(assetsDir,it) })
-  outputs.file(output)
+  def assetsDir=file('src/main/assets'), output=file('src/main/assets/stable_bundle_v050.js')
+  inputs.files(stableSources.collect { new File(assetsDir,it) }); outputs.file(output)
   doLast {
-    output.setText('/* CHS ANDROID v0.5.1 STABLE */\n','UTF-8')
+    output.setText('/* CHS ANDROID v0.5.2 STABLE */\n','UTF-8')
     stableSources.each { name ->
       def source=new File(assetsDir,name)
       if(!source.exists()) throw new GradleException('Fonte ausente: '+name)
@@ -41,7 +38,7 @@ document.head.appendChild(css);
 function mode(){try{return NativeStore.get('ui_theme')||'dark'}catch(e){return 'dark'}}
 window.setChsTheme=function(v){if(v!=='light')v='dark';try{NativeStore.set('ui_theme',v)}catch(e){}document.documentElement.classList.toggle('chs-light',v==='light')};
 setChsTheme(mode());
-var old=window.renderSettings;if(typeof old==='function')window.renderSettings=function(m){old(m);m.innerHTML=m.innerHTML.replace(/v0\.5\.0/g,'v0.5.1');var d=document.createElement('div');d.className='setting';d.innerHTML='<h3>Aparência</h3><p>Tema da interface.</p><button class="btn" id="themeDark">Escuro</button> <button class="btn" id="themeLight">Claro</button>';m.appendChild(d);d.querySelector('#themeDark').onclick=function(){setChsTheme('dark');render()};d.querySelector('#themeLight').onclick=function(){setChsTheme('light');render()};};
+var old=window.renderSettings;if(typeof old==='function')window.renderSettings=function(m){old(m);m.innerHTML=m.innerHTML.replace(/v0\.5\.0|v0\.5\.1/g,'v0.5.2');var d=document.createElement('div');d.className='setting';d.innerHTML='<h3>Aparência</h3><p>Tema da interface.</p><button class="btn" id="themeDark">Escuro</button> <button class="btn" id="themeLight">Claro</button>';m.appendChild(d);d.querySelector('#themeDark').onclick=function(){setChsTheme('dark');render()};d.querySelector('#themeLight').onclick=function(){setChsTheme('light');render()};};
 })();
 ''','UTF-8')
   }
