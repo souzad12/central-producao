@@ -1,7 +1,7 @@
-name: Build CHS Android v0.5.4 LIXEIRA FIX
+name: Build CHS Android v0.5.5 SINGLE TRASH + THEMES
 on:
   push:
-    branches: ["chs-android-v0.5.4"]
+    branches: ["chs-android-v0.5.5"]
   workflow_dispatch:
 jobs:
   build:
@@ -20,8 +20,8 @@ jobs:
       - name: Build APK
         working-directory: chs-android-v0.1
         run: gradle assembleDebug --stacktrace
-      - run: cp chs-android-v0.1/app/build/outputs/apk/debug/app-debug.apk Church-History-Studio-Android-v0.5.4-LIXEIRA-FIX.apk
+      - run: cp chs-android-v0.1/app/build/outputs/apk/debug/app-debug.apk Church-History-Studio-Android-v0.5.5-SINGLE-TRASH-THEMES.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Church-History-Studio-Android-v0.5.4-LIXEIRA-FIX
-          path: Church-History-Studio-Android-v0.5.4-LIXEIRA-FIX.apk
+          name: Church-History-Studio-Android-v0.5.5-SINGLE-TRASH-THEMES
+          path: Church-History-Studio-Android-v0.5.5-SINGLE-TRASH-THEMES.apk
