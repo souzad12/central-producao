@@ -1,0 +1,1 @@
+(()=>{window.CHS_VERSION='0.6.1';const sub=document.querySelector('.sub');if(sub)sub.textContent='SHOWRUNNER HISTÓRICO · ANDROID v0.6.1 · WRITER LITERÁRIO v2';const top=document.getElementById('topStatus');if(top)top.textContent='WRITER LITERÁRIO v2 · SALA + SHOWRUNNER + EDITOR';})();
